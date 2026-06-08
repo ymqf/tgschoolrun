@@ -7,6 +7,32 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// TG Campus Run Icon SVG
+const TGIcon = ({ className, style }) => (
+  <svg className={className} style={style} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+    <defs>
+      <clipPath id="iconClipFooter">
+        <rect x="0" y="0" width="100" height="100" rx="20" ry="20" />
+      </clipPath>
+    </defs>
+    <g clipPath="url(#iconClipFooter)">
+      <g>
+        <rect x="0" y="0" width="25" height="25" fill="#87d8ff"/>
+        <rect x="25" y="0" width="25" height="25" fill="#44b8ff"/>
+        <rect x="50" y="0" width="25" height="25" fill="#0088ff"/>
+        <rect x="75" y="0" width="25" height="25" fill="#2299ff"/>
+        <rect x="0" y="25" width="25" height="25" fill="#87d8ff"/>
+        <rect x="25" y="25" width="25" height="25" fill="#44b8ff"/>
+        <rect x="50" y="25" width="25" height="25" fill="#66b8ff"/>
+        <rect x="0" y="50" width="25" height="25" fill="#a0e0ff"/>
+        <rect x="25" y="50" width="25" height="25" fill="#cce8ff"/>
+        <rect x="0" y="75" width="25" height="25" fill="#b0e8ff"/>
+      </g>
+      <polygon points="100,0 100,100 0,100" fill="#ffffff"/>
+    </g>
+  </svg>
+);
+
 const footerLinks = {
   产品: ['功能介绍', '下载页面', '更新日志', '路线图'],
   支持: ['帮助中心', '常见问题', '联系我们', '提交反馈'],
@@ -16,7 +42,7 @@ const footerLinks = {
 const socialLinks = [
   { icon: Globe, label: '官网', href: '#' },
   { icon: MessageCircle, label: '微信', href: '#' },
-  { icon: Mail, label: '邮箱', href: 'mailto:support@campusrun.com' },
+  { icon: Mail, label: '邮箱', href: 'mailto:support@tgrun.com' },
 ];
 
 export default function Footer() {
@@ -164,6 +190,7 @@ export default function Footer() {
       />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         {/* Top divider */}
         <div
           data-gsap-divider
@@ -176,13 +203,14 @@ export default function Footer() {
           {/* Brand column */}
           <div className="footer-col opacity-0">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-neon flex items-center justify-center">
-                <Zap className="w-4 h-4 text-midnight" />
+              {/* Custom TG Icon */}
+              <div className="w-8 h-8 relative" style={{ overflow: 'hidden' }}>
+                <TGIcon className="w-full h-full" />
               </div>
-              <span className="font-display font-bold text-ice text-lg">CAMPUSRUN</span>
+              <span className="font-display font-bold text-ice text-lg">TG校园跑助手<span className="text-neon">5.0</span></span>
             </div>
             <p className="text-sm text-fog/50 leading-relaxed mb-6">
-              智能校园跑步解决方案，让运动变得简单高效。
+              真正意义上的校园跑自动完成助手，无需手摇、无需ROOT、可自定义规划路线。
             </p>
             <div ref={socialRef} className="flex gap-3">
               {socialLinks.map((s, i) => (
@@ -226,7 +254,7 @@ export default function Footer() {
           className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/5 opacity-0"
         >
           <div className="text-sm text-fog/30 font-mono">
-            © 2026 CampusRun. All rights reserved.
+            © 2026 TG校园跑助手. All rights reserved.
           </div>
           <div className="flex items-center gap-6 text-xs text-fog/30 font-mono">
             <a href="#" className="hover:text-neon/60 transition-colors">隐私政策</a>

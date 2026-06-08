@@ -1,58 +1,46 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
+import { ChevronDown } from 'lucide-react';
 
 if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin);
 }
 
 const faqs = [
   {
-    q: '校园跑助手真的能自动完成打卡吗？',
-    a: '是的！校园跑助手通过智能轨迹识别和AI算法，可以真实模拟跑步运动状态，自动完成校园跑打卡任务。我们已经帮助超过10万同学顺利完成校园跑。',
-    accent: '#c8ff00',
+    q: 'TG校园跑助手5.0 需要ROOT权限吗？',
+    a: '完全不需要ROOT权限。我们采用系统级辅助功能实现自动操作，无需获取ROOT权限，不会破坏手机保修，安全无忧。',
   },
   {
-    q: '使用校园跑助手会被检测到吗？',
-    a: '我们的智能算法会模拟真实的运动状态，包括速度变化、轨迹偏移、暂停等真实跑步特征，让每次打卡都符合学校要求的标准。目前为止零封号记录。',
-    accent: '#ff3d5a',
+    q: '支持哪些校园跑App？',
+    a: '目前支持市面上99%的校园跑App，包括：步道、悦跑圈、咕咚、Keep等主流运动App。后续将持续增加支持范围。',
   },
   {
-    q: '支持哪些校园跑平台？',
-    a: '我们支持目前市面上99%的校园跑平台，包括知到、步道、体侧、运动世界校园等主流App，覆盖全国超过100所高校。',
-    accent: '#2563eb',
+    q: '会被检测出来吗？',
+    a: '我们采用AI智能模拟算法，每次运动参数都会随机微调，完全模拟真人运动模式，极大降低被检测风险。但请合理使用，避免过度频繁。',
   },
   {
-    q: '需要root或越狱手机吗？',
-    a: '完全不需要！校园跑助手不需要root或越狱，不影响手机保修，不获取敏感权限，安全无忧。',
-    accent: '#4ade80',
+    q: '如何自定义规划路线？',
+    a: '在App的设置页面中，你可以自由绘制或选择预设路线。5.0版本支持导入GPX轨迹文件，一键规划专属路线。',
   },
-  {
-    q: '如何保证我的隐私安全？',
-    a: '校园跑助手完全本地运行，不上传任何个人数据到服务器。我们严格遵守隐私保护原则，你的所有信息只保存在你的设备上。',
-    accent: '#c8ff00',
-  },
-  {
-    q: '如果打卡失败怎么办？',
-    a: '我们有7天无理由退款保障。如果因为软件原因导致打卡失败，我们承诺全额退款。同时提供全程技术支持，确保你的问题得到及时解决。',
-    accent: '#ff3d5a',
-  },
+  // "7天无理由退款保障" 已移除
 ];
 
-function FAQItem({ faq, index, isOpen, onToggle }) {
+function FaqItem({ item, index, isActive, onClick }) {
   const itemRef = useRef(null);
-  const contentRef = useRef(null);
-  const iconRef = useRef(null);
+  const answerRef = useRef(null);
 
   useEffect(() => {
     if (!itemRef.current) return;
 
     const ctx = gsap.context(() => {
-      // Item entrance
+      // Entrance
       gsap.fromTo(itemRef.current,
-        { opacity: 0, y: 40, x: index % 2 === 0 ? -20 : 20 },
+        { opacity: 0, y: 40, filter: 'blur(4px)' },
         {
-          opacity: 1, y: 0, x: 0,
+          opacity: 1, y: 0, filter: 'blur(0px)',
           duration: 0.7,
           delay: index * 0.08,
           ease: 'power3.out',
@@ -65,89 +53,89 @@ function FAQItem({ faq, index, isOpen, onToggle }) {
         }
       );
 
-      // Border line draw
-      const lineEl = itemRef.current.querySelector('[data-gsap-line]');
-      if (lineEl) {
-        gsap.fromTo(lineEl,
-          { scaleX: 0 },
+      // Answer reveal animation
+      if (isActive && answerRef.current) {
+        gsap.fromTo(answerRef.current,
+          { opacity: 0, y: -10, scaleY: 0.95 },
           {
-            scaleX: 1,
-            duration: 0.6,
-            delay: 0.3 + index * 0.05,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: itemRef.current,
-              start: 'top 88%',
-              toggleActions: 'play none none none',
-              id: 'faq',
-            },
+            opacity: 1, y: 0, scaleY: 1,
+            duration: 0.5,
+            ease: 'power3.out',
           }
         );
+      }
+
+      // Chevron rotation
+      const chevron = itemRef.current.querySelector('[data-chevron]');
+      if (chevron) {
+        gsap.to(chevron, {
+          rotation: isActive ? 180 : 0,
+          duration: 0.4,
+          ease: 'power2.out',
+        });
+      }
+
+      // Accent line draw
+      const line = itemRef.current.querySelector('[data-faq-line]');
+      if (line && isActive) {
+        gsap.fromTo(line,
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.5, ease: 'power2.out' }
+        );
+      } else if (line) {
+        gsap.to(line, { scaleX: 0, duration: 0.3, ease: 'power2.in' });
       }
 
     }, itemRef);
 
     return () => ctx.revert();
-  }, [index]);
-
-  useEffect(() => {
-    if (!contentRef.current) return;
-    if (isOpen) {
-      gsap.fromTo(contentRef.current,
-        { opacity: 0, y: -10, height: 0 },
-        { opacity: 1, y: 0, height: 'auto', duration: 0.4, ease: 'power2.out' }
-      );
-      gsap.to(iconRef.current, { rotation: 45, duration: 0.3, ease: 'power2.out' });
-    } else {
-      gsap.to(contentRef.current,
-        { opacity: 0, y: -10, height: 0, duration: 0.3, ease: 'power2.in' }
-      );
-      gsap.to(iconRef.current, { rotation: 0, duration: 0.3, ease: 'power2.out' });
-    }
-  }, [isOpen]);
+  }, [isActive, index]);
 
   return (
     <div
       ref={itemRef}
-      className="neon-card overflow-hidden opacity-0"
+      className={`neon-card p-6 cursor-pointer group opacity-0 ${isActive ? 'border-neon/30' : ''}`}
+      onClick={onClick}
       style={{ transformPerspective: 1000 }}
     >
-      <button
-        className="w-full flex items-center justify-between p-6 text-left"
-        onClick={onToggle}
-      >
-        <span className="font-display font-bold text-ice text-lg pr-4">{faq.q}</span>
+      <div className="flex items-center justify-between gap-4">
+        <h3 className="font-display text-lg font-bold text-ice leading-tight pr-4">
+          <span className="text-neon/60 font-mono text-sm mr-3">0{index + 1}</span>
+          {item.q}
+        </h3>
         <div
-          ref={iconRef}
-          className="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-white/10"
-          style={{ backgroundColor: `${faq.accent}10` }}
+          data-chevron
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center border border-white/10 group-hover:border-neon/30 transition-colors"
+          style={{ transform: 'rotate(0deg)' }}
         >
-          <span className="text-lg font-bold" style={{ color: faq.accent }}>+</span>
-        </div>
-      </button>
-
-      <div ref={contentRef} className="overflow-hidden h-0">
-        <div className="px-6 pb-6 pt-0">
-          <p className="text-sm text-fog/60 leading-relaxed">{faq.a}</p>
+          <ChevronDown className="w-4 h-4 text-fog/50 group-hover:text-neon transition-colors" />
         </div>
       </div>
 
-      {/* Animated bottom line */}
-      <div className="h-px bg-white/5">
-        <div
-          data-gsap-line
-          className="h-full origin-left"
-          style={{ backgroundColor: faq.accent, scaleX: 0 }}
-        />
+      {/* Answer */}
+      <div
+        ref={answerRef}
+        className={`overflow-hidden transition-all duration-500 ${isActive ? 'max-h-96 mt-4' : 'max-h-0'}`}
+      >
+        <div className="relative pl-6">
+          {/* Vertical accent line */}
+          <div
+            data-faq-line
+            className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-neon to-success-400 origin-top"
+            style={{ scaleX: 0 }}
+          />
+          <p className="text-fog/60 leading-relaxed text-sm">{item.a}</p>
+        </div>
       </div>
     </div>
   );
 }
 
 export default function FAQ() {
+  const [activeIndex, setActiveIndex] = useState(null);
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
-  const [openIndex, setOpenIndex] = useState(null);
+  const subRef = useRef(null);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -155,9 +143,9 @@ export default function FAQ() {
     const ctx = gsap.context(() => {
       // Heading
       gsap.fromTo(headingRef.current,
-        { opacity: 0, y: 50, clipPath: 'inset(0 50% 0 50%)' },
+        { opacity: 0, y: 50, filter: 'blur(10px)' },
         {
-          opacity: 1, y: 0, clipPath: 'inset(0 0% 0 0%)',
+          opacity: 1, y: 0, filter: 'blur(0px)',
           duration: 1,
           ease: 'power3.out',
           scrollTrigger: {
@@ -169,8 +157,25 @@ export default function FAQ() {
         }
       );
 
+      // Subtext
+      gsap.fromTo(subRef.current,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1, y: 0,
+          duration: 0.7,
+          delay: 0.2,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: subRef.current,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+            id: 'faq',
+          },
+        }
+      );
+
       // Section label
-      const label = sectionRef.current.querySelector('[data-gsap="label"]');
+      const label = sectionRef.current.querySelector('[data-gsap="section-label"]');
       if (label) {
         gsap.fromTo(label,
           { opacity: 0, x: -30 },
@@ -188,21 +193,43 @@ export default function FAQ() {
         );
       }
 
-      // Background orbs parallax
-      const orbs = sectionRef.current.querySelectorAll('[data-gsap="orb"]');
-      orbs.forEach((orb, i) => {
-        gsap.to(orb, {
-          y: -50 - i * 20,
-          x: i % 2 === 0 ? 15 : -15,
+      // Background mesh parallax
+      const mesh = sectionRef.current.querySelector('[data-gsap="bg-mesh"]');
+      if (mesh) {
+        gsap.to(mesh, {
+          y: -50,
           ease: 'none',
           scrollTrigger: {
             trigger: sectionRef.current,
             start: 'top bottom',
             end: 'bottom top',
-            scrub: 0.5,
+            scrub: true,
             id: 'faq',
           },
         });
+      }
+
+      // Shockwave on scroll
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: 'top 60%',
+        onEnter: () => {
+          const wave = document.createElement('div');
+          wave.style.cssText = `
+            position: absolute; top: 50%; left: 50%;
+            width: 10px; height: 10px;
+            border: 1px solid rgba(200,255,0,0.3);
+            border-radius: 50%; border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            pointer-events: none; z-index: 0;
+          `;
+          sectionRef.current.appendChild(wave);
+          gsap.to(wave, {
+            scale: 20, opacity: 0, duration: 1.5, ease: 'power2.out',
+            onComplete: () => wave.remove()
+          });
+        },
+        id: 'faq',
       });
 
     }, sectionRef);
@@ -210,46 +237,52 @@ export default function FAQ() {
     return () => ctx.revert();
   }, []);
 
-  const toggle = (index) => {
-    setOpenIndex(prev => prev === index ? null : index);
-  };
-
   return (
     <section id="faq" ref={sectionRef} className="py-24 lg:py-32 relative overflow-hidden">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Background orbs */}
-        <div data-gsap="orb" className="absolute top-[5%] left-[8%] w-[250px] h-[250px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(200,255,0,0.04) 0%, transparent 70%)' }} />
-        <div data-gsap="orb" className="absolute bottom-[5%] right-[8%] w-[350px] h-[350px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(255,61,90,0.03) 0%, transparent 70%)' }} />
+
+        {/* Background mesh */}
+        <div data-gsap="bg-mesh" className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-[30%] right-[10%] w-[350px] h-[350px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(200,255,0,0.04) 0%, transparent 70%)' }}
+          />
+        </div>
 
         {/* Header */}
-        <div className="mb-16 lg:mb-20 text-center">
-          <span data-gsap="label" className="section-label mb-6 inline-flex opacity-0">
+        <div className="mb-16 lg:mb-24">
+          <span data-gsap="section-label" className="section-label mb-6 inline-flex opacity-0">
+            <span className="w-2 h-2 bg-neon rounded-full animate-pulse mr-2" />
             常见问题
           </span>
           <h2
             ref={headingRef}
-            className="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold text-ice leading-tight tracking-tight opacity-0"
+            className="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold text-ice leading-tight tracking-tight mb-4 opacity-0"
           >
-            还有<span className="gradient-text-hero">疑问？</span>
+            还有疑问？
             <br />
-            看这里
+            <span className="gradient-text-hero">我们来解答</span>
           </h2>
+          <p
+            ref={subRef}
+            className="text-fog/50 max-w-lg text-base opacity-0"
+          >
+            以下是用户最常提出的问题。
+          </p>
         </div>
 
-        {/* FAQ Grid */}
+        {/* FAQ List */}
         <div className="max-w-3xl mx-auto space-y-4">
-          {faqs.map((faq, index) => (
-            <FAQItem
-              key={index}
-              faq={faq}
-              index={index}
-              isOpen={openIndex === index}
-              onToggle={() => toggle(index)}
+          {faqs.map((item, i) => (
+            <FaqItem
+              key={i}
+              item={item}
+              index={i}
+              isActive={activeIndex === i}
+              onClick={() => setActiveIndex(activeIndex === i ? null : i)}
             />
           ))}
         </div>
+
       </div>
     </section>
   );

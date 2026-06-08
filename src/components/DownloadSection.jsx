@@ -2,7 +2,6 @@ import { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
-import { QrCode } from 'lucide-react';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin);
@@ -112,7 +111,7 @@ function QrCodeFrame({ accent }) {
 
         {/* Center logo area */}
         <rect x="38" y="38" width="24" height="24" fill={`${accent}10`} rx="2" />
-        <text x="50" y="53" textAnchor="middle" fontSize="10" fill={accent} fontWeight="bold">CR</text>
+        <text x="50" y="53" textAnchor="middle" fontSize="10" fill={accent} fontWeight="bold">TG</text>
       </svg>
 
       {/* Scan line overlay */}
@@ -189,10 +188,14 @@ function DownloadCard({ platform, icon, title, subtitle, accent, index }) {
     >
       {/* Platform icon */}
       <div
-        className="w-16 h-16 flex items-center justify-center mb-6 border"
+        className="w-16 h-16 flex items-center justify-center mb-6 border relative"
         style={{ borderColor: `${accent}30`, backgroundColor: `${accent}10` }}
       >
         <IconComp className="w-8 h-8" style={{ color: accent }} />
+        {/* Glow pulse */}
+        <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          style={{ background: `radial-gradient(circle, ${accent}20 0%, transparent 70%)` }}
+        />
       </div>
 
       <h3 className="font-display text-xl font-bold text-ice mb-2">{title}</h3>
@@ -216,7 +219,7 @@ function DownloadCard({ platform, icon, title, subtitle, accent, index }) {
           backgroundSize: '200% 100%',
         }}
       >
-        <span className="relative z-10">立即下载</span>
+        <span className="relative z-10">立即下载 5.0</span>
         {/* Hover fill */}
         <div
           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -324,11 +327,28 @@ export default function DownloadSection() {
           });
         });
 
+        // Shockwave on scroll into view
+        ScrollTrigger.create({
+          trigger: sectionRef.current,
+          start: 'top 50%',
+          onEnter: () => {
+            const shock = sectionRef.current.querySelector('[data-gsap="shockwave"]');
+            if (shock) {
+              gsap.fromTo(shock,
+                { scale: 0, opacity: 0.4 },
+                { scale: 4, opacity: 0, duration: 1.2, ease: 'power2.out' }
+              );
+            }
+          },
+          id: 'download',
+        });
+
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
+  // Only Android platform - iOS removed
   const platforms = [
     {
       platform: 'android',
@@ -337,20 +357,9 @@ export default function DownloadSection() {
           <path d="M6,2 L10,2 L11.5,4 L18,4 C19.1,4 20,4.9 20,6 L20,18 C20,19.1 19.1,20 18,20 L6,20 C4.9,20 4,19.1 4,18 L4,4 C4,2.9 4.9,2 6,2 Z M8,6 L6,6 L6,18 L18,18 L18,6 L8,6 Z M10,8 L16,8 L16,10 L10,10 Z M10,12 L14,12 L14,14 L10,14 Z" />
         </svg>
       ),
-      title: 'Android 版',
-      subtitle: '支持 Android 8.0 及以上',
+      title: 'Android 版 5.0',
+      subtitle: '支持 Android 8.0 及以上 · 无需ROOT',
       accent: '#c8ff00',
-    },
-    {
-      platform: 'ios',
-      icon: ({ className, style }) => (
-        <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor">
-          <path d="M18.71,19.5 C17.56,20.91 16.04,22 12,22 C7.96,22 6.44,20.91 5.29,19.5 C4.14,18.09 4,15.5 4,12 C4,8.5 4.14,5.91 5.29,4.5 C6.44,3.09 7.96,2 12,2 C16.04,2 17.56,3.09 18.71,4.5 C19.86,5.91 20,8.5 20,12 C20,15.5 19.86,18.09 18.71,19.5 Z M12,5.5 C11.21,5.5 10.5,5.68 9.93,6 C9.36,6.32 9,6.86 8.5,7.5 L8.5,7.5 C8.04,8.14 7.78,8.84 7.5,9.5 C7.14,10.43 7,11.19 7,12 C7,14.5 8.5,17.5 12,17.5 C15.5,17.5 17,14.5 17,12 C17,11.19 16.86,10.43 16.5,9.5 C16.22,8.84 15.96,8.14 15.5,7.5 L15.5,7.5 C15,6.86 14.64,6.32 14.07,6 C13.5,5.68 12.79,5.5 12,5.5 Z" />
-        </svg>
-      ),
-      title: 'iOS 版',
-      subtitle: '支持 iOS 13.0 及以上',
-      accent: '#ff3d5a',
     },
   ];
 
@@ -372,27 +381,31 @@ export default function DownloadSection() {
         <div data-gsap="orb" className="absolute bottom-[20%] left-[15%] w-[120px] h-[120px] rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 70%)' }} />
 
+        {/* Shockwave */}
+        <div data-gsap="shockwave" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-neon/30 pointer-events-none" />
+
         {/* Header */}
         <div className="text-center mb-16 lg:mb-24">
           <span data-gsap="label" className="section-label mb-6 inline-flex opacity-0">
+            <span className="w-2 h-2 bg-neon rounded-full animate-pulse mr-2" />
             立即下载
           </span>
           <h2
             ref={headingRef}
             className="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold text-ice leading-tight tracking-tight mb-4 opacity-0"
           >
-            免费<span className="gradient-text-hero">下载</span>校园跑助手
+            免费<span className="gradient-text-hero">下载</span>TG校园跑5.0
           </h2>
           <p
             ref={subRef}
             className="text-fog/50 max-w-lg mx-auto text-base opacity-0"
           >
-            选择你的平台，立即下载体验
+            支持 Android 平台，无需ROOT，安装即用
           </p>
         </div>
 
-        {/* Download Cards */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        {/* Download Cards - single column since only Android */}
+        <div className="grid md:grid-cols-1 gap-8 max-w-md mx-auto">
           {platforms.map((p, i) => (
             <DownloadCard key={p.platform} {...p} index={i} />
           ))}
@@ -401,11 +414,13 @@ export default function DownloadSection() {
         {/* Version info */}
         <div className="mt-16 text-center opacity-0" data-gsap="version">
           <div className="inline-flex items-center gap-4 text-xs text-fog/30 font-mono">
-            <span>v2.5.0</span>
+            <span>v5.0.0</span>
             <span>·</span>
-            <span>2026年5月</span>
+            <span>2026年6月</span>
             <span>·</span>
             <span>5MB</span>
+            <span>·</span>
+            <span className="text-neon/60">无需ROOT</span>
           </div>
         </div>
 

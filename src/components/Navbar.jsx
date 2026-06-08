@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Menu, X, Download, Zap } from 'lucide-react';
+import { Menu, X, Download } from 'lucide-react';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -13,6 +13,32 @@ const navLinks = [
   { label: '用户评价', href: '#testimonials' },
   { label: '常见问题', href: '#faq' },
 ];
+
+// TG Campus Run Icon SVG
+const TGIcon = ({ className, style }) => (
+  <svg className={className} style={style} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+    <defs>
+      <clipPath id="iconClip">
+        <rect x="0" y="0" width="100" height="100" rx="20" ry="20" />
+      </clipPath>
+    </defs>
+    <g clipPath="url(#iconClip)">
+      <g>
+        <rect x="0" y="0" width="25" height="25" fill="#87d8ff"/>
+        <rect x="25" y="0" width="25" height="25" fill="#44b8ff"/>
+        <rect x="50" y="0" width="25" height="25" fill="#0088ff"/>
+        <rect x="75" y="0" width="25" height="25" fill="#2299ff"/>
+        <rect x="0" y="25" width="25" height="25" fill="#87d8ff"/>
+        <rect x="25" y="25" width="25" height="25" fill="#44b8ff"/>
+        <rect x="50" y="25" width="25" height="25" fill="#66b8ff"/>
+        <rect x="0" y="50" width="25" height="25" fill="#a0e0ff"/>
+        <rect x="25" y="50" width="25" height="25" fill="#cce8ff"/>
+        <rect x="0" y="75" width="25" height="25" fill="#b0e8ff"/>
+      </g>
+      <polygon points="100,0 100,100 0,100" fill="#ffffff"/>
+    </g>
+  </svg>
+);
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -42,21 +68,26 @@ export default function Navbar() {
         { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
       );
 
-      // Logo animation
+      // Logo animation - lightning fast entrance
       if (logoRef.current) {
         gsap.fromTo(logoRef.current,
-          { opacity: 0, scale: 0.8, rotation: -10 },
-          { opacity: 1, scale: 1, rotation: 0, duration: 0.6, delay: 0.3, ease: 'back.out(1.7)' }
+          { opacity: 0, scale: 0.5, rotation: -15 },
+          { opacity: 1, scale: 1, rotation: 0, duration: 0.8, delay: 0.3, ease: 'back.out(2)' }
         );
 
-        // Logo hover
+        // Logo hover - electric pulse
         const logoEl = logoRef.current;
-        const logoIcon = logoEl.querySelector('[data-logo-icon]');
-        if (logoIcon) {
-          logoEl.addEventListener('mouseenter', () => {
-            gsap.to(logoIcon, { rotation: 360, duration: 0.8, ease: 'power2.out' });
-          });
-        }
+        logoEl.addEventListener('mouseenter', () => {
+          gsap.to(logoEl, { scale: 1.08, duration: 0.3, ease: 'power2.out' });
+          // Lightning flash effect
+          const flash = logoEl.querySelector('[data-logo-flash]');
+          if (flash) {
+            gsap.fromTo(flash, { opacity: 0.8, scale: 0.5 }, { opacity: 0, scale: 2, duration: 0.6, ease: 'power2.out' });
+          }
+        });
+        logoEl.addEventListener('mouseleave', () => {
+          gsap.to(logoEl, { scale: 1, duration: 0.3, ease: 'power2.out' });
+        });
       }
 
       // Desktop nav links stagger
@@ -79,7 +110,7 @@ export default function Navbar() {
         }
       });
 
-      // CTA button
+      // CTA button - magnetic effect
       if (ctaRef.current) {
         gsap.fromTo(ctaRef.current,
           { opacity: 0, scale: 0.9 },
@@ -156,11 +187,14 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <a href="#" className="flex items-center gap-2 group" ref={logoRef} style={{ opacity: 0 }}>
-            <div data-logo-icon className="w-9 h-9 bg-neon flex items-center justify-center transition-transform">
-              <Zap className="w-5 h-5 text-midnight" />
+            {/* Custom TG Icon */}
+            <div data-logo-icon className="w-9 h-9 relative" style={{ overflow: 'hidden' }}>
+              <TGIcon className="w-full h-full" />
+              {/* Lightning flash overlay */}
+              <div data-logo-flash className="absolute inset-0 bg-neon/50 rounded-lg opacity-0" />
             </div>
             <span className="text-lg font-display font-bold text-ice tracking-tight">
-              CAMPUS<span className="text-neon">RUN</span>
+              TG校园跑助手<span className="text-neon">5.0</span>
             </span>
           </a>
 

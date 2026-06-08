@@ -1,13 +1,114 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Observer } from 'gsap/Observer';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
-import { Zap, ArrowRight, Play, Sparkles, Shield } from 'lucide-react';
+import { Zap, ArrowRight, Play, Shield, Cpu, Route } from 'lucide-react';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger, Observer, DrawSVGPlugin, ScrambleTextPlugin);
+}
+
+// ==================== Lightning Effect ====================
+function LightningEffect() {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let animFrame;
+    let lightning = [];
+
+    const createLightning = () => ({
+      x: Math.random() * canvas.width,
+      y: 0,
+      length: 100 + Math.random() * 200,
+      angle: Math.PI / 4 + (Math.random() - 0.5) * 0.5,
+      speed: 15 + Math.random() * 10,
+      opacity: 1,
+      branches: Math.floor(Math.random() * 3),
+    });
+
+    const drawLightning = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      lightning = lightning.filter(l => l.opacity > 0);
+
+      lightning.forEach(l => {
+        ctx.beginPath();
+        ctx.moveTo(l.x, l.y);
+
+        const endX = l.x + Math.cos(l.angle) * l.length;
+        const endY = l.y + Math.sin(l.angle) * l.length;
+
+        // Jagged line
+        const segments = 8;
+        for (let i = 0; i <= segments; i++) {
+          const t = i / segments;
+          const sx = l.x + (endX - l.x) * t + (Math.random() - 0.5) * 20;
+          const sy = l.y + (endY - l.y) * t;
+          if (i === 0) ctx.moveTo(sx, sy);
+          else ctx.lineTo(sx, sy);
+        }
+
+        ctx.strokeStyle = `rgba(200, 255, 0, ${l.opacity})`;
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#c8ff00';
+        ctx.stroke();
+
+        // Branches
+        for (let b = 0; b < l.branches; b++) {
+          const t = 0.3 + Math.random() * 0.5;
+          const bx = l.x + (endX - l.x) * t;
+          const by = l.y + (endY - l.y) * t;
+          ctx.beginPath();
+          ctx.moveTo(bx, by);
+          ctx.lineTo(bx + (Math.random() - 0.5) * 80, by + Math.random() * 60);
+          ctx.strokeStyle = `rgba(200, 255, 0, ${l.opacity * 0.5})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        l.y += l.speed;
+        l.opacity -= 0.02;
+      });
+
+      if (Math.random() < 0.05) {
+        lightning.push(createLightning());
+      }
+
+      animFrame = requestAnimationFrame(drawLightning);
+    };
+
+    drawLightning();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animFrame);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none z-10"
+      style={{ opacity: 0.4 }}
+    />
+  );
 }
 
 // ==================== Mesh Background Blobs ====================
@@ -38,52 +139,46 @@ function MeshBlobs() {
   );
 }
 
-// ==================== Geometric Shapes ====================
-function GeoShapes() {
-  const crossRef = useRef(null);
-  const circleRef = useRef(null);
-  const triRef = useRef(null);
+// ==================== Particle Explosion ====================
+function ParticleExplosion({ trigger }) {
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    if (!crossRef.current) return;
-    gsap.to(crossRef.current, { rotation: 90, scale: 1.2, duration: 8, repeat: -1, yoyo: true, ease: 'sine.inOut' });
-    gsap.to(circleRef.current, { y: -20, opacity: 0.3, duration: 6, repeat: -1, yoyo: true, ease: 'sine.inOut' });
-    gsap.to(triRef.current, { rotation: 180, y: -15, duration: 12, repeat: -1, yoyo: true, ease: 'sine.inOut' });
-  }, []);
+    if (!containerRef.current || !trigger) return;
+
+    const particles = containerRef.current.querySelectorAll('[data-particle]');
+    particles.forEach((p, i) => {
+      const angle = (i / particles.length) * Math.PI * 2;
+      const distance = 50 + Math.random() * 100;
+      gsap.fromTo(p,
+        { opacity: 1, scale: 0, x: 0, y: 0 },
+        {
+          opacity: 0, scale: 1,
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+          duration: 0.8,
+          delay: i * 0.02,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    });
+  }, [trigger]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Diagonal lines */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="diagGsap" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="40" stroke="#c8ff00" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#diagGsap)" />
-      </svg>
-
-      {/* Floating cross */}
-      <div ref={crossRef} className="absolute top-[20%] right-[15%] text-neon/20">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-          <rect x="17" y="0" width="6" height="40" fill="currentColor" />
-          <rect x="0" y="17" width="40" height="6" fill="currentColor" />
-        </svg>
-      </div>
-
-      {/* Floating circle */}
-      <div ref={circleRef} className="absolute bottom-[30%] left-[10%]">
-        <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-          <circle cx="30" cy="30" r="28" stroke="#ff3d5a" strokeWidth="2" opacity="0.3" />
-        </svg>
-      </div>
-
-      {/* Floating triangle */}
-      <div ref={triRef} className="absolute top-[60%] right-[25%]">
-        <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-          <polygon points="15,2 28,28 2,28" stroke="#c8ff00" strokeWidth="1.5" fill="none" opacity="0.2" />
-        </svg>
-      </div>
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none">
+      {[...Array(12)].map((_, i) => (
+        <div
+          key={i}
+          data-particle
+          className="absolute w-1.5 h-1.5 rounded-full bg-neon/60"
+          style={{ left: '50%', top: '50%', marginLeft: -3, marginTop: -3 }}
+        />
+      ))}
     </div>
   );
 }
@@ -100,7 +195,7 @@ function TickerBar() {
     }
   }, []);
 
-  const items = ['自动打卡', '智能轨迹', '安全可靠', '极速上手', '多平台支持', '数据统计'];
+  const items = ['无需手摇', '无需ROOT', '自定义路线', '自动打卡', '安全可靠', '5.0震撼来袭'];
 
   return (
     <div className="py-4 border-y border-white/5 overflow-hidden">
@@ -129,6 +224,8 @@ export default function Hero() {
   const badge1Ref = useRef(null);
   const badge2Ref = useRef(null);
   const phoneScreenRef = useRef(null);
+  const [displayText, setDisplayText] = useState('');
+  const scrambleRef = useRef(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -144,19 +241,43 @@ export default function Hero() {
         id: 'hero',
       });
 
-      // Badge entrance
+      // Badge entrance with bounce
       tl.fromTo(badgeRef.current,
         { opacity: 0, y: 30, scale: 0.9 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.6 }
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.7)' }
       );
 
-      // Heading lines stagger
+      // Heading lines stagger with blur
       const headingLines = headingRef.current?.querySelectorAll('[data-hero-text]');
       if (headingLines) {
         tl.fromTo(headingLines,
           { opacity: 0, y: 60, filter: 'blur(10px)' },
           { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, stagger: 0.12 },
           '-=0.3'
+        );
+      }
+
+      // Scramble text effect
+      if (scrambleRef.current) {
+        tl.fromTo(scrambleRef.current,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            duration: 0.5,
+            onComplete: () => {
+              if (scrambleRef.current) {
+                gsap.to(scrambleRef.current, {
+                  scrambleText: {
+                    text: '可自定义规划路线',
+                    chars: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%',
+                    speed: 0.3,
+                  },
+                  duration: 1.5,
+                });
+              }
+            },
+          },
+          '-=0.2'
         );
       }
 
@@ -167,7 +288,7 @@ export default function Hero() {
         '-=0.4'
       );
 
-      // CTA buttons
+      // CTA buttons with magnetic prep
       const ctaBtns = ctaRef.current?.querySelectorAll('a');
       if (ctaBtns) {
         tl.fromTo(ctaBtns,
@@ -177,33 +298,55 @@ export default function Hero() {
         );
       }
 
-      // Phone mockup
+      // Phone mockup with 3D flip entrance
       tl.fromTo(phoneRef.current,
-        { opacity: 0, x: 80, rotateY: -15, scale: 0.9 },
-        { opacity: 1, x: 0, rotateY: 0, scale: 1, duration: 1.2, ease: 'expo.out' },
+        { opacity: 0, x: 80, rotateY: -25, rotateX: 5, scale: 0.8 },
+        { opacity: 1, x: 0, rotateY: 0, rotateX: 0, scale: 1, duration: 1.5, ease: 'expo.out' },
         '-=0.6'
       );
 
-      // Floating badges
+      // Floating badges with elastic entrance
       tl.fromTo([badge1Ref.current, badge2Ref.current],
-        { opacity: 0, scale: 0.5, y: 20 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.5, stagger: 0.15 },
+        { opacity: 0, scale: 0.3, y: 30 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.7, stagger: 0.15, ease: 'elastic.out(1, 0.5)' },
         '-=0.3'
       );
+
+      // Particle explosion on badge appear
+      tl.add(() => {
+        const badges = [badge1Ref.current, badge2Ref.current];
+        badges.forEach(badge => {
+          if (!badge) return;
+          const particles = badge.querySelectorAll('[data-particle]');
+          particles.forEach((p, i) => {
+            const angle = (i / particles.length) * Math.PI * 2;
+            gsap.fromTo(p,
+              { opacity: 1, scale: 0, x: 0, y: 0 },
+              {
+                opacity: 0, scale: 1,
+                x: Math.cos(angle) * 40,
+                y: Math.sin(angle) * 40,
+                duration: 0.6,
+                delay: i * 0.03,
+                ease: 'power2.out',
+              }
+            );
+          });
+        });
+      }, '-=0.2');
 
       // ========== Phone Screen Animations ==========
       // Progress bar
       const progressBar = phoneScreenRef.current?.querySelector('[data-progress]');
       if (progressBar) {
         gsap.to(progressBar, {
-          width: '75%',
-          duration: 1.5,
+          width: '85%',
+          duration: 2,
           ease: 'power2.out',
           scrollTrigger: {
             trigger: phoneRef.current,
             start: 'top 80%',
             toggleActions: 'play none none none',
-            id: 'hero',
           },
         });
       }
@@ -213,15 +356,14 @@ export default function Hero() {
       if (kmEl) {
         const obj = { val: 0 };
         gsap.to(obj, {
-          val: 2.5,
-          duration: 2,
+          val: 5.0,
+          duration: 3,
           ease: 'power2.out',
           onUpdate: () => { kmEl.textContent = obj.val.toFixed(1); },
           scrollTrigger: {
             trigger: phoneRef.current,
             start: 'top 80%',
             toggleActions: 'play none none none',
-            id: 'hero',
           },
         });
       }
@@ -286,6 +428,25 @@ export default function Hero() {
         delay: 1,
       });
 
+      // ========== Lightning Flash on Heading Hover ==========
+      const headingEl = headingRef.current;
+      if (headingEl) {
+        headingEl.addEventListener('mouseenter', () => {
+          const flash = document.createElement('div');
+          flash.style.cssText = `
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(200,255,0,0.1), transparent);
+            pointer-events: none;
+            z-index: 10;
+          `;
+          headingEl.style.position = 'relative';
+          headingEl.appendChild(flash);
+          gsap.fromTo(flash, { x: '-100%' }, { x: '100%', duration: 0.6, ease: 'power2.inOut',
+            onComplete: () => flash.remove()
+          });
+        });
+      }
+
     }, sectionRef);
 
     return () => ctx.revert();
@@ -307,56 +468,65 @@ export default function Hero() {
 
   return (
     <section ref={sectionRef} className="relative min-h-screen flex flex-col overflow-hidden hero-bg">
+      <LightningEffect />
       <MeshBlobs />
-      <GeoShapes />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-8 flex-1 flex items-center">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center w-full">
 
           {/* Left Content */}
           <div>
-
             {/* Badge */}
             <div ref={badgeRef} className="mb-8 opacity-0">
               <span className="section-label">
                 <span className="w-2 h-2 bg-neon rounded-full animate-pulse" />
-                v2.5 — 全新升级
+                v5.0 — 震撼来袭
               </span>
             </div>
 
             {/* Heading */}
             <h1 ref={headingRef} className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-display font-extrabold leading-[0.9] mb-8 tracking-tight opacity-0">
               <span data-hero-text className="block text-ice/40 text-2xl sm:text-3xl font-body font-normal tracking-normal mb-4">
-                智能校园跑步解决方案
+                TG校园跑助手 5.0
               </span>
               <span data-hero-text className="block text-ice">
-                让校园跑
+                震撼来袭
               </span>
               <span data-hero-text className="block gradient-text-hero mt-2">
-                自动完成
+                真正自动完成
               </span>
               <span data-hero-text className="block text-ice/60 text-3xl sm:text-4xl lg:text-5xl mt-4 font-light">
-                轻松达标<span className="neon-text">_</span>
+                无需手摇<span className="neon-text">·</span>无需ROOT
               </span>
             </h1>
 
+            {/* Scramble text subtitle */}
+            <div
+              ref={scrambleRef}
+              className="text-lg text-neon/80 max-w-lg mb-4 font-mono tracking-wide opacity-0"
+            >
+              可自定义规划路线
+            </div>
+
             {/* Subtitle */}
             <p ref={subtitleRef} className="text-lg text-fog max-w-lg mb-10 leading-relaxed opacity-0">
-              智能识别运动轨迹，自动记录跑步数据。
+              真正意义上的校园跑自动完成助手。
               <br />
-              <span className="text-fog/50">一键设置，省时省力，学业运动两不误。</span>
+              <span className="text-fog/50">自定义规划路线，智能模拟真实运动，</span>
+              <br />
+              <span className="text-fog/50">让校园跑从此告别手动操作。</span>
             </p>
 
             {/* CTA Buttons */}
             <div ref={ctaRef} className="flex flex-col sm:flex-row gap-4 mb-12 opacity-0">
               <a href="#download" className="btn-neon">
                 <Zap className="w-5 h-5" />
-                立即下载
+                立即下载 5.0
                 <ArrowRight className="w-5 h-5" />
               </a>
               <a href="#how-it-works" className="btn-outline">
                 <Play className="w-5 h-5" />
-                了解更多
+                观看演示
               </a>
             </div>
 
@@ -364,8 +534,8 @@ export default function Hero() {
             <div className="flex items-center gap-8 text-sm text-fog/50 opacity-0">
               {[
                 { icon: Shield, text: '本地运行' },
-                { icon: Zap, text: '3分钟设置' },
-                { icon: Sparkles, text: '10万+用户' },
+                { icon: Cpu, text: '无需ROOT' },
+                { icon: Route, text: '自定义路线' },
               ].map((badge, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <badge.icon className="w-4 h-4 text-neon/60" />
@@ -386,12 +556,14 @@ export default function Hero() {
             {/* Floating badge 1 */}
             <div ref={badge1Ref} className="floating-badge top-8 -left-4 lg:left-4 opacity-0">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-neon/20 flex items-center justify-center">
+                <div className="w-8 h-8 bg-neon/20 flex items-center justify-center relative">
+                  {/* Particle container */}
+                  <div data-particle className="absolute inset-0 pointer-events-none" />
                   <Zap className="w-4 h-4 text-neon" />
                 </div>
                 <div>
                   <div className="text-[10px] text-fog/50 uppercase tracking-wider">今日</div>
-                  <div className="text-sm font-bold text-ice">2.5 公里</div>
+                  <div className="text-sm font-bold text-ice">5.0 公里</div>
                 </div>
               </div>
             </div>
@@ -399,7 +571,8 @@ export default function Hero() {
             {/* Floating badge 2 */}
             <div ref={badge2Ref} className="floating-badge bottom-32 -right-4 lg:right-0 opacity-0">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-success-400/20 flex items-center justify-center">
+                <div className="w-8 h-8 bg-success-400/20 flex items-center justify-center relative">
+                  <div data-particle className="absolute inset-0 pointer-events-none" />
                   <span className="text-success-400 text-sm font-bold">✓</span>
                 </div>
                 <div>
@@ -430,8 +603,8 @@ export default function Hero() {
                     <Zap className="w-5 h-5 text-neon" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-ice font-display">校园跑助手</div>
-                    <div className="text-[10px] text-fog/40">Smart Campus Runner</div>
+                    <div className="text-sm font-bold text-ice font-display">TG校园跑 5.0</div>
+                    <div className="text-[10px] text-fog/40">Smart Campus Runner Pro</div>
                   </div>
                 </div>
 
@@ -441,7 +614,7 @@ export default function Hero() {
                   <div className="bg-white/5 p-3 border border-white/5">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-[10px] text-fog/50 uppercase tracking-wider">今日进度</span>
-                      <span className="text-xs font-mono text-neon">75%</span>
+                      <span className="text-xs font-mono text-neon">85%</span>
                     </div>
                     <div className="h-1.5 bg-white/5 overflow-hidden">
                       <div data-progress className="h-full bg-gradient-to-r from-neon to-success-400" style={{ width: '0%' }} />
@@ -459,7 +632,7 @@ export default function Hero() {
                     <div className="bg-white/5 p-3 border border-white/5 text-center"
                       style={{ animation: 'float 3s ease-in-out infinite 1s' }}
                     >
-                      <div className="text-xl font-bold text-ice font-display">18:30</div>
+                      <div className="text-xl font-bold text-ice font-display">32:15</div>
                       <div className="text-[9px] text-fog/40 uppercase tracking-wider mt-0.5">用时</div>
                     </div>
                   </div>
@@ -467,7 +640,7 @@ export default function Hero() {
                   {/* Status badge */}
                   <div className="bg-neon/10 border border-neon/20 p-3 text-center">
                     <div className="text-xs font-bold text-neon font-display uppercase tracking-wider">
-                      ✓ 自动打卡完成
+                      ✓ 5.0 自动打卡完成
                     </div>
                   </div>
 
@@ -480,7 +653,7 @@ export default function Hero() {
                         />
                       </svg>
                     </div>
-                    <div className="text-[10px] text-fog/30 uppercase tracking-wider">运动轨迹</div>
+                    <div className="text-[10px] text-fog/30 uppercase tracking-wider">运动轨迹 · 自定义路线</div>
                   </div>
                 </div>
               </div>

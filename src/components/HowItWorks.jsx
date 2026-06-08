@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
-import { Download, Settings, Zap, CheckCircle } from 'lucide-react';
+import { Download, Settings, CheckCircle } from 'lucide-react';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin);
@@ -13,26 +13,19 @@ const steps = [
     step: '01',
     icon: Download,
     title: '下载安装',
-    description: '在本站免费下载校园跑助手，支持Android和iOS双平台，安装包仅5MB。',
+    description: '在本站免费下载TG校园跑助手5.0，支持Android 8.0及以上，安装包仅5MB。',
     accent: '#c8ff00',
-    details: ['支持 Android 8.0+', '支持 iOS 13.0+', '安装包仅 5MB'],
+    details: ['支持 Android 8.0+', '无需ROOT权限', '安装包仅 5MB'],
   },
   {
     step: '02',
     icon: Settings,
     title: '简单设置',
-    description: '选择校园跑平台，设置跑步时间和目标距离，整个过程不超过3分钟。',
+    description: '选择校园跑平台，自定义规划路线和跑步参数，整个过程不超过3分钟。',
     accent: '#ff3d5a',
-    details: ['适配主流校园跑App', '自定义跑步参数', '3分钟极速配置'],
+    details: ['导入GPX轨迹文件', '自定义跑步参数', '3分钟极速配置'],
   },
-  {
-    step: '03',
-    icon: Zap,
-    title: '自动运行',
-    description: '到设定时间自动开始运行，智能模拟运动状态，完成后自动打卡。',
-    accent: '#2563eb',
-    details: ['定时自动启动', '智能运动模拟', '自动完成打卡'],
-  },
+  // 第3步"自动运行"已移除
 ];
 
 // ==================== Connector Line with SVG Draw ====================
@@ -45,7 +38,7 @@ function ConnectorLine({ lineRef }) {
           stroke="#c8ff00"
           strokeWidth="0.5"
           opacity="0.3"
-          data-gsap-draw
+          data-gsap-raw
         />
         {/* Animated dot */}
         <circle cx="0" cy="10" r="2" fill="#c8ff00" opacity="0.8" data-gsap-dot />
@@ -70,7 +63,7 @@ function StepCard({ step, index }) {
         {
           opacity: 1, y: 0, rotateX: 0,
           duration: 1,
-          delay: index * 0.2,
+          delay: index * 0.25,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: cardRef.current,
@@ -81,15 +74,27 @@ function StepCard({ step, index }) {
         }
       );
 
-      // Icon pulse
+      // Icon pulse with glow
       if (iconRef.current) {
         gsap.to(iconRef.current, {
-          scale: 1.15,
+          scale: 1.2,
           duration: 1.5,
           repeat: -1,
           yoyo: true,
           ease: 'sine.inOut',
           delay: index * 0.3,
+        });
+
+        // Glow effect on hover
+        const card = cardRef.current;
+        card.addEventListener('mouseenter', () => {
+          gsap.to(iconRef.current, { rotation: 15, scale: 1.4, duration: 0.4, ease: 'back.out(2)' });
+          // Add glow shadow
+          gsap.to(iconRef.current, { filter: `drop-shadow(0 0 20px ${step.accent})`, duration: 0.3 });
+        });
+        card.addEventListener('mouseleave', () => {
+          gsap.to(iconRef.current, { rotation: 0, scale: 1.2, duration: 0.3, ease: 'power2.out' });
+          gsap.to(iconRef.current, { filter: 'drop-shadow(0 0 0px transparent)', duration: 0.3 });
         });
       }
 
@@ -101,7 +106,7 @@ function StepCard({ step, index }) {
           {
             opacity: 1, x: 0,
             duration: 0.5,
-            delay: 0.5 + i * 0.1,
+            delay: 0.6 + i * 0.1,
             ease: 'power2.out',
             scrollTrigger: {
               trigger: cardRef.current,
@@ -114,7 +119,7 @@ function StepCard({ step, index }) {
       });
 
       // SVG line draw animation
-      const lineEl = document.querySelector('[data-gsap-draw]');
+      const lineEl = document.querySelector('[data-gsap-raw]');
       if (lineEl) {
         gsap.fromTo(lineEl,
           { drawSVG: '0% 0%' },
@@ -142,7 +147,7 @@ function StepCard({ step, index }) {
           repeatDelay: 2,
           ease: 'power1.inOut',
           scrollTrigger: {
-            trigger: lineEl?.closest('section'),
+            trigger: dotEl.closest('section'),
             start: 'top 60%',
             toggleActions: 'play none none none',
             id: 'how-it-works',
@@ -161,16 +166,16 @@ function StepCard({ step, index }) {
     <div
       ref={cardRef}
       className="neon-card p-8 relative group opacity-0"
-      style={{ transformPerspective: 1000, transformStyle: 'preserve-3d' }}
+      style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}
     >
       {/* Step number */}
       <div className="flex items-center gap-4 mb-6">
         <div
           ref={iconRef}
-          className="w-14 h-14 flex items-center justify-center border"
+          className="w-14 h-14 flex items-center justify-center border transition-transform"
           style={{
-            borderColor: `${step.accent}30`,
-            backgroundColor: `${step.accent}10`,
+            borderColor: `${step.accent}30%`,
+            backgroundColor: `${step.accent}10%`,
           }}
         >
           <Icon className="w-6 h-6" style={{ color: step.accent }} />
@@ -283,6 +288,30 @@ export default function HowItWorks() {
         });
       }
 
+      // Shockwave on scroll
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: 'top 50%',
+        onEnter: () => {
+          const shock = document.createElement('div');
+          shock.style.cssText = `
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 20px; height: 20px;
+            border: 1px solid rgba(200,255,0,0.3);
+            border-radius: 50%; pointer-events: none; z-index: 0;
+          `;
+          sectionRef.current.appendChild(shock);
+          gsap.fromTo(shock,
+            { scale: 0, opacity: 0.5 },
+            { scale: 5, opacity: 0, duration: 1.5, ease: 'power2.out',
+              onComplete: () => shock.remove()
+            }
+          );
+        },
+        id: 'how-it-works',
+      });
+
     }, sectionRef);
 
     return () => ctx.revert();
@@ -309,6 +338,7 @@ export default function HowItWorks() {
         {/* Header */}
         <div className="mb-16 lg:mb-24">
           <span data-gsap="section-label" className="section-label mb-6 inline-flex opacity-0">
+            <span className="w-2 h-2 bg-neon rounded-full animate-pulse mr-2" />
             使用方式
           </span>
           <h2
@@ -316,12 +346,13 @@ export default function HowItWorks() {
             className="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold text-ice leading-tight tracking-tight opacity-0"
           >
             三步即可
+            <br />
             <span className="gradient-text-hero"> 轻松完成</span>
           </h2>
         </div>
 
-        {/* Steps */}
-        <div className="grid lg:grid-cols-3 gap-8 relative">
+        {/* Steps — now only 2 steps */}
+        <div className="grid lg:grid-cols-2 gap-8 relative">
           <ConnectorLine lineRef={lineRef} />
 
           {steps.map((step, index) => (

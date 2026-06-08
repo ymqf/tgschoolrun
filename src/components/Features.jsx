@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { MapPin, Brain, BarChart3, Shield, Clock, Smartphone } from 'lucide-react';
+import { MapPin, Brain, BarChart3, Shield, Smartphone } from 'lucide-react';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -36,19 +36,13 @@ const features = [
     accent: '#c8ff00',
     number: '04',
   },
-  {
-    icon: Clock,
-    title: '定时任务',
-    description: '设置自动运行时间，到点自动开始跑步任务，再也不用手动操作。',
-    accent: '#ff3d5a',
-    number: '05',
-  },
+  // 第5个功能"定时任务/自动运行"已移除
   {
     icon: Smartphone,
-    title: '多平台支持',
-    description: '支持Android和iOS双平台，适配市面上99%的校园跑App。',
-    accent: '#2563eb',
-    number: '06',
+    title: 'Android 支持',
+    description: '支持Android 8.0及以上版本，无需ROOT权限，安装即用。',
+    accent: '#ff3d5a',
+    number: '05',
   },
 ];
 
@@ -65,7 +59,7 @@ function FeatureCard({ feature, index }) {
       {
         opacity: 1, y: 0, scale: 1, filter: 'blur(0px)',
         duration: 0.8,
-        delay: index * 0.1,
+        delay: index * 0.12,
         ease: 'power3.out',
         scrollTrigger: {
           trigger: cardRef.current,
@@ -83,8 +77,8 @@ function FeatureCard({ feature, index }) {
       const x = (e.clientX - rect.left) / rect.width - 0.5;
       const y = (e.clientY - rect.top) / rect.height - 0.5;
       gsap.to(card, {
-        rotateY: x * 10,
-        rotateX: -y * 10,
+        rotateY: x * 15,
+        rotateX: -y * 15,
         duration: 0.5,
         ease: 'power2.out',
       });
@@ -96,19 +90,16 @@ function FeatureCard({ feature, index }) {
     card.addEventListener('mousemove', handleMouseMove);
     card.addEventListener('mouseleave', handleMouseLeave);
 
-    // Icon hover animation
+    // Icon hover animation - electric pulse
     if (iconRef.current) {
-      gsap.to(iconRef.current, {
-        rotation: 5,
-        scale: 1.1,
-        duration: 0.3,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: cardRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none reverse',
-          id: 'features',
-        },
+      const iconEl = iconRef.current;
+      iconEl.addEventListener('mouseenter', () => {
+        gsap.to(iconEl, { rotation: 15, scale: 1.3, duration: 0.4, ease: 'back.out(2)' });
+        // Electric flash
+        gsap.fromTo(iconEl, { filter: 'drop-shadow(0 0 0px #c8ff00)' }, { filter: 'drop-shadow(0 0 20px #c8ff00)', duration: 0.3, yoyo: true, repeat: 1 });
+      });
+      iconEl.addEventListener('mouseleave', () => {
+        gsap.to(iconEl, { rotation: 0, scale: 1, duration: 0.3, ease: 'power2.out' });
       });
     }
 
@@ -124,14 +115,14 @@ function FeatureCard({ feature, index }) {
   return (
     <div
       ref={cardRef}
-      className="feature-card group"
+      className="feature-card group cursor-pointer"
       style={{ transformPerspective: 1000, transformStyle: 'preserve-3d' }}
     >
       {/* Number */}
       <div className="flex items-start justify-between mb-6">
         <div
           ref={iconRef}
-          className="w-12 h-12 flex items-center justify-center border border-white/10"
+          className="w-12 h-12 flex items-center justify-center border border-white/10 transition-transform"
           style={{ backgroundColor: `${feature.accent}10` }}
         >
           <Icon className="w-6 h-6" style={{ color: feature.accent }} />
@@ -145,10 +136,16 @@ function FeatureCard({ feature, index }) {
       </h3>
       <p className="text-sm text-fog/60 leading-relaxed">{feature.description}</p>
 
-      {/* Acsent line — animated on hover via CSS */}
+      {/* Accent line — animated on hover via CSS */}
       <div
         className="absolute bottom-0 left-0 h-[2px] w-0 group-hover:w-full transition-all duration-500"
         style={{ backgroundColor: feature.accent }}
+      />
+
+      {/* Glow on hover */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{ background: `radial-gradient(circle at 50% 100%, ${feature.accent}08 0%, transparent 70%)` }}
       />
     </div>
   );
@@ -231,6 +228,22 @@ export default function Features() {
         });
       }
 
+      // Shockwave ripple on scroll
+      const ripple = sectionRef.current.querySelector('[data-gsap="ripple"]');
+      if (ripple) {
+        ScrollTrigger.create({
+          trigger: sectionRef.current,
+          start: 'top 60%',
+          onEnter: () => {
+            gsap.fromTo(ripple,
+              { scale: 0, opacity: 0.5 },
+              { scale: 3, opacity: 0, duration: 1.5, ease: 'power2.out' }
+            );
+          },
+          id: 'features',
+        });
+      }
+
     }, sectionRef);
 
     return () => ctx.revert();
@@ -249,9 +262,13 @@ export default function Features() {
           />
         </div>
 
+        {/* Shockwave ripple */}
+        <div data-gsap="ripple" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border border-neon/20 pointer-events-none" />
+
         {/* Section Header — asymmetric layout */}
         <div className="mb-16 lg:mb-24">
           <span data-gsap="section-label" className="section-label mb-6 inline-flex opacity-0">
+            <span className="w-2 h-2 bg-neon rounded-full animate-pulse mr-2" />
             功能特色
           </span>
           <div className="grid lg:grid-cols-12 gap-6 items-end">
@@ -261,13 +278,13 @@ export default function Features() {
             >
               为什么选择
               <br />
-              <span className="gradient-text-hero">校园跑助手</span>
+              <span className="gradient-text-hero">TG校园跑5.0</span>
             </h2>
             <p
               ref={subtextRef}
               className="lg:col-span-4 text-fog/60 text-base leading-relaxed opacity-0"
             >
-              全方位的校园跑步解决方案，让运动变得更加简单高效。
+              无需手摇、无需ROOT，自定义规划路线，真正意义上的自动完成助手。
             </p>
           </div>
         </div>
